@@ -1,0 +1,271 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"/>
+  <meta name="apple-mobile-web-app-capable" content="yes"/>
+  <meta name="apple-mobile-web-app-status-bar-style" content="default"/>
+  <meta name="apple-mobile-web-app-title" content="Água"/>
+  <meta name="theme-color" content="#378ADD"/>
+  <title>Hidratação Diária</title>
+  <link rel="manifest" href="manifest.json"/>
+  <link rel="apple-touch-icon" href="icon.png"/>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --blue: #378ADD;
+      --blue-dark: #185FA5;
+      --blue-light: #E6F1FB;
+      --green: #1D9E75;
+      --green-light: #E1F5EE;
+      --green-dark: #085041;
+      --red: #E24B4A;
+      --red-light: #FCEBEB;
+      --red-dark: #791F1F;
+      --gray: #E0E0E0;
+      --gray-mid: #BDBDBD;
+      --gray-dark: #888;
+      --text: #1a1a1a;
+      --text-sec: #666;
+      --text-hint: #aaa;
+      --bg: #f5f5f5;
+      --card: #ffffff;
+      --border: rgba(0,0,0,0.1);
+    }
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --text: #f0f0f0;
+        --text-sec: #aaa;
+        --text-hint: #666;
+        --bg: #111;
+        --card: #1e1e1e;
+        --border: rgba(255,255,255,0.1);
+        --blue-light: #0c2d4a;
+        --green-light: #0a2e20;
+        --red-light: #2e0f0f;
+      }
+    }
+    html, body { height: 100%; background: var(--bg); color: var(--text); font-family: -apple-system, BlinkMacSystemFont, 'Helvetica Neue', sans-serif; }
+    body { padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left); overflow-x: hidden; }
+
+    .app { max-width: 420px; margin: 0 auto; padding: 1.5rem 1rem 3rem; }
+
+    h1 { font-size: 22px; font-weight: 600; text-align: center; margin-bottom: 4px; }
+    .subtitle { font-size: 13px; color: var(--text-sec); text-align: center; margin-bottom: 1.5rem; transition: color .3s; }
+    .subtitle.ok { color: var(--green); }
+
+    /* Bottle */
+    .bottle-wrap { display: flex; justify-content: center; margin-bottom: 1.5rem; }
+
+    /* Stats */
+    .stats { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 1rem; }
+    .stat { background: var(--card); border: 0.5px solid var(--border); border-radius: 12px; padding: 12px 14px; }
+    .stat-label { font-size: 11px; color: var(--text-sec); margin-bottom: 2px; }
+    .stat-value { font-size: 24px; font-weight: 600; }
+    .stat-unit { font-size: 12px; color: var(--text-sec); }
+
+    /* Progress */
+    .prog-wrap { background: var(--border); border-radius: 999px; height: 8px; margin-bottom: 1.5rem; overflow: hidden; }
+    .prog-fill { height: 100%; background: var(--blue); border-radius: 999px; transition: width .5s ease; }
+
+    /* Big button */
+    .big-btn { width: 100%; padding: 18px; border-radius: 16px; background: var(--blue); border: none; color: #fff; font-size: 18px; font-weight: 600; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 10px; margin-bottom: 1.5rem; -webkit-tap-highlight-color: transparent; transition: opacity .15s, transform .1s; }
+    .big-btn:active { transform: scale(0.97); opacity: .88; }
+
+    /* Timeline */
+    .section-title { font-size: 11px; font-weight: 600; color: var(--text-sec); letter-spacing: .06em; text-transform: uppercase; margin-bottom: 12px; }
+    .timeline { display: flex; align-items: flex-start; margin-bottom: 1.5rem; }
+    .tl-slot { flex: 1; display: flex; flex-direction: column; align-items: center; position: relative; }
+    .tl-line { position: absolute; top: 13px; left: 50%; right: -50%; height: 2px; background: var(--border); z-index: 0; transition: background .4s; }
+    .tl-slot:last-child .tl-line { display: none; }
+    .tl-dot { width: 28px; height: 28px; border-radius: 50%; border: 2px solid var(--border); background: var(--card); display: flex; align-items: center; justify-content: center; font-size: 13px; position: relative; z-index: 1; transition: all .3s; }
+    .tl-dot.done { background: var(--green); border-color: var(--green); color: #fff; }
+    .tl-dot.active { background: var(--blue); border-color: var(--blue); color: #fff; }
+    .tl-dot.late { background: var(--red); border-color: var(--red); color: #fff; }
+    .tl-label { font-size: 12px; font-weight: 600; color: var(--text-sec); margin-top: 5px; }
+    .tl-sub { font-size: 10px; color: var(--text-hint); margin-top: 1px; text-align: center; }
+    .tl-slot.done .tl-label { color: var(--green-dark); }
+    .tl-slot.active .tl-label { color: var(--blue-dark); }
+    .tl-slot.late .tl-label { color: var(--red-dark); }
+
+    /* Calculator */
+    .card { background: var(--card); border: 0.5px solid var(--border); border-radius: 16px; padding: 1rem 1.25rem; margin-bottom: 1.5rem; }
+    .form-row { display: flex; gap: 10px; align-items: center; margin-bottom: 10px; }
+    .form-row label { font-size: 13px; color: var(--text-sec); min-width: 58px; }
+    .form-row input, .form-row select { flex: 1; padding: 9px 12px; border-radius: 10px; border: 0.5px solid var(--border); background: var(--bg); color: var(--text); font-size: 15px; -webkit-appearance: none; }
+    .calc-btn { width: 100%; margin-top: 4px; padding: 12px; border-radius: 12px; background: var(--blue); border: none; color: #fff; font-size: 15px; font-weight: 600; cursor: pointer; -webkit-tap-highlight-color: transparent; }
+    .calc-btn:active { opacity: .88; }
+    .result-pill { display: inline-flex; align-items: center; gap: 6px; background: var(--blue-light); color: var(--blue-dark); border-radius: 999px; padding: 6px 14px; font-size: 13px; font-weight: 600; margin-top: 10px; }
+    .calc-info { font-size: 11px; color: var(--text-hint); margin-top: 6px; }
+
+    /* Log */
+    .log-list { list-style: none; display: flex; flex-direction: column; gap: 6px; }
+    .log-item { display: flex; justify-content: space-between; align-items: center; background: var(--card); border: 0.5px solid var(--border); border-radius: 10px; padding: 10px 14px; font-size: 13px; }
+    .log-time { color: var(--text-sec); }
+    .log-ml { font-weight: 600; }
+    .del-btn { background: none; border: none; cursor: pointer; color: var(--text-hint); font-size: 18px; line-height: 1; padding: 0 2px; -webkit-tap-highlight-color: transparent; }
+    .empty { font-size: 13px; color: var(--text-hint); text-align: center; padding: 14px 0; }
+
+    .reset-btn { width: 100%; margin-top: 1rem; background: none; border: 0.5px solid var(--border); border-radius: 12px; padding: 10px; font-size: 13px; color: var(--text-sec); cursor: pointer; -webkit-tap-highlight-color: transparent; }
+  </style>
+</head>
+<body>
+<div class="app">
+  <h1>💧 Hidratação diária</h1>
+  <div class="subtitle" id="main-sub">Calcule sua meta e comece</div>
+
+  <!-- Bottle SVG -->
+  <div class="bottle-wrap">
+    <svg width="130" height="250" viewBox="0 0 140 260" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Garrafa animada">
+      <defs>
+        <clipPath id="bodyClip">
+          <rect x="22" y="72" width="96" height="162" rx="14"/>
+        </clipPath>
+      </defs>
+      <rect x="26" y="228" width="88" height="14" rx="7" fill="#C0C0C0"/>
+      <rect x="22" y="72" width="96" height="162" rx="14" fill="#E8E8E8"/>
+      <rect id="wfill" x="22" y="234" width="96" height="0" fill="#85B7EB" opacity=".8" clip-path="url(#bodyClip)" style="transition: y .6s ease, height .6s ease"/>
+      <rect x="22" y="72" width="96" height="162" rx="14" fill="none" stroke="#BDBDBD" stroke-width="1.5"/>
+      <rect x="30" y="80" width="11" height="110" rx="5.5" fill="white" opacity=".4"/>
+      <rect x="30" y="58" width="80" height="16" rx="5" fill="#CACACA" stroke="#B5B5B5" stroke-width="1"/>
+      <rect x="35" y="44" width="70" height="16" rx="5" fill="#D5D5D5" stroke="#BDBDBD" stroke-width="1"/>
+      <rect x="32" y="10" width="76" height="36" rx="10" fill="#D8D8D8" stroke="#BDBDBD" stroke-width="1.2"/>
+      <ellipse cx="70" cy="10" rx="38" ry="10" fill="#CFCFCF" stroke="#BDBDBD" stroke-width="1"/>
+      <rect x="55" y="2" width="30" height="12" rx="6" fill="#C0C0C0" stroke="#BDBDBD" stroke-width="1"/>
+      <path d="M110 46 Q133 46 133 62 Q133 78 110 78" fill="none" stroke="#CACACA" stroke-width="7" stroke-linecap="round"/>
+      <path d="M110 46 Q133 46 133 62 Q133 78 110 78" fill="none" stroke="#BDBDBD" stroke-width="1.5" stroke-linecap="round"/>
+      <circle cx="110" cy="46" r="5" fill="#B8B8B8" stroke="#A0A0A0" stroke-width="1"/>
+      <circle cx="110" cy="78" r="5" fill="#B8B8B8" stroke="#A0A0A0" stroke-width="1"/>
+      <text id="pct-lbl" x="70" y="165" text-anchor="middle" font-size="20" font-weight="700" fill="#185FA5" font-family="-apple-system,sans-serif">0%</text>
+    </svg>
+  </div>
+
+  <!-- Stats -->
+  <div class="stats">
+    <div class="stat">
+      <div class="stat-label">Bebido hoje</div>
+      <div><span class="stat-value" id="drank-val">0</span><span class="stat-unit"> ml</span></div>
+    </div>
+    <div class="stat">
+      <div class="stat-label">Meta diária</div>
+      <div><span class="stat-value" id="goal-val">2000</span><span class="stat-unit"> ml</span></div>
+    </div>
+  </div>
+
+  <div class="prog-wrap"><div class="prog-fill" id="prog-fill" style="width:0%"></div></div>
+
+  <!-- Big button -->
+  <button class="big-btn" onclick="addWater()">💧 Beber 950 ml</button>
+
+  <!-- Timeline -->
+  <div class="section-title">Meta por horário</div>
+  <div class="timeline" id="timeline"></div>
+
+  <!-- Calculator -->
+  <div class="section-title">Calculadora de meta</div>
+  <div class="card">
+    <div class="form-row">
+      <label>Peso</label>
+      <input type="number" id="peso" placeholder="kg" inputmode="decimal"/>
+      <span style="font-size:13px;color:var(--text-sec)">kg</span>
+    </div>
+    <div class="form-row">
+      <label>Altura</label>
+      <input type="number" id="altura" placeholder="cm" inputmode="decimal"/>
+      <span style="font-size:13px;color:var(--text-sec)">cm</span>
+    </div>
+    <div class="form-row" style="margin-bottom:0">
+      <label>Atividade</label>
+      <select id="ativ">
+        <option value="1">Sedentário</option>
+        <option value="1.1" selected>Leve (caminhada)</option>
+        <option value="1.2">Moderada (academia)</option>
+        <option value="1.35">Intensa (esporte)</option>
+      </select>
+    </div>
+    <button class="calc-btn" onclick="calcMeta()">Calcular minha meta</button>
+    <div id="calc-res" style="display:none">
+      <div class="result-pill">💧 Meta: <strong id="meta-txt">—</strong></div>
+      <div class="calc-info" id="calc-info"></div>
+    </div>
+  </div>
+
+  <!-- Log -->
+  <div class="section-title">Registro de hoje</div>
+  <ul class="log-list" id="log-list"><li class="empty">Nenhum registro ainda</li></ul>
+  <button class="reset-btn" onclick="resetDay()">↺ Reiniciar dia</button>
+</div>
+
+<script>
+const SLOTS = [{label:'12h',hour:12},{label:'16h',hour:16},{label:'20h',hour:20},{label:'22h',hour:22}];
+let state = JSON.parse(localStorage.getItem('h2o') || '{"total":0,"goal":2000,"log":[],"date":""}');
+
+function todayStr() { return new Date().toISOString().slice(0,10); }
+function nowStr() { return new Date().toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'}); }
+function curHour() { return new Date().getHours(); }
+
+if (state.date !== todayStr()) { state = {total:0,goal:state.goal,log:[],date:todayStr()}; save(); }
+
+function save() { localStorage.setItem('h2o', JSON.stringify(state)); }
+
+function calcMeta() {
+  const p = parseFloat(document.getElementById('peso').value);
+  const f = parseFloat(document.getElementById('ativ').value);
+  if (!p||p<30) { alert('Preencha o peso corretamente.'); return; }
+  const adj = Math.round(p*35*f/50)*50;
+  state.goal = adj;
+  document.getElementById('meta-txt').textContent = adj+' ml';
+  document.getElementById('calc-info').textContent = p+'kg × 35ml × '+f+' = '+adj+'ml';
+  document.getElementById('calc-res').style.display='block';
+  save(); render();
+}
+
+function addWater() { state.total+=950; state.log.unshift({ml:950,time:nowStr()}); save(); render(); }
+
+function removeEntry(i) { state.total=Math.max(0,state.total-state.log[i].ml); state.log.splice(i,1); save(); render(); }
+
+function resetDay() { state.total=0; state.log=[]; save(); render(); }
+
+function render() {
+  const pct = Math.min(100,Math.round(state.total/state.goal*100));
+  document.getElementById('drank-val').textContent = state.total;
+  document.getElementById('goal-val').textContent = state.goal;
+  document.getElementById('prog-fill').style.width = pct+'%';
+
+  const sub = document.getElementById('main-sub');
+  if (pct>=100) { sub.textContent='Meta atingida hoje! Parabéns! 🎉'; sub.className='subtitle ok'; }
+  else { sub.textContent='Faltam '+(state.goal-state.total)+' ml para sua meta'; sub.className='subtitle'; }
+
+  const fillH = Math.round(pct/100*162);
+  const fillY = 234-fillH;
+  document.getElementById('wfill').setAttribute('y',fillY);
+  document.getElementById('wfill').setAttribute('height',fillH);
+  const lblY = pct>60 ? fillY-10 : 165;
+  document.getElementById('pct-lbl').setAttribute('y', Math.max(100,lblY));
+  document.getElementById('pct-lbl').textContent = pct+'%';
+
+  const ch = curHour();
+  document.getElementById('timeline').innerHTML = SLOTS.map((s,i)=>{
+    const sg = Math.round(state.goal*(i+1)/SLOTS.length);
+    let cls='', icon='○';
+    if (ch>=s.hour) { cls=state.total>=sg?'done':'late'; icon=state.total>=sg?'✓':'!'; }
+    else if (i===0||ch>=SLOTS[i-1].hour) { cls='active'; icon='▶'; }
+    const lc = cls==='done'?'#1D9E75':cls==='active'?'#378ADD':'rgba(0,0,0,0.1)';
+    return `<div class="tl-slot ${cls}">
+      <div class="tl-line" style="background:${lc}"></div>
+      <div class="tl-dot ${cls}">${icon}</div>
+      <div class="tl-label">${s.label}</div>
+      <div class="tl-sub">${sg}ml</div>
+    </div>`;
+  }).join('');
+
+  const ll = document.getElementById('log-list');
+  ll.innerHTML = state.log.length===0
+    ? '<li class="empty">Nenhum registro ainda</li>'
+    : state.log.map((e,i)=>`<li class="log-item"><span class="log-time">${e.time}</span><span class="log-ml">+${e.ml} ml</span><button class="del-btn" onclick="removeEntry(${i})">×</button></li>`).join('');
+}
+
+render();
+</script>
+</body>
+</html>
